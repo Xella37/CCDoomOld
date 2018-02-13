@@ -7,6 +7,8 @@ os.loadAPI(path.."/ThreeD")
 os.loadAPI(path.."/bufferAPI")
 os.loadAPI(path.."/blittle")
 
+local keysDown = {}
+
 objects = {}
 
 gun = paintutils.loadImage(path.."/images/gun")
@@ -150,116 +152,103 @@ end
 
 function inputPlayer()
 	while true do
-		local sEvent, key = os.pullEventRaw()
-
-		if (sEvent == "key") then
-			local dX = 0
-			local dZ = 0 
-
-			if (key == keys.left) then
-				playerDirectionHor = (playerDirectionHor - playerTurnSpeed)
-				if (playerDirectionHor <= -180) then
-					playerDirectionHor = playerDirectionHor + 360
-				end
-			elseif (key == keys.right) then
-				playerDirectionHor = (playerDirectionHor + playerTurnSpeed)
-				if (playerDirectionHor >= 180) then
-					playerDirectionHor = playerDirectionHor - 360
-				end
-			elseif (key == keys.down) then
-				playerDirectionVer = (playerDirectionVer - playerTurnSpeed)
-				if (playerDirectionVer < -80) then
-					playerDirectionVer = -80
-				end
-			elseif (key == keys.up) then
-				playerDirectionVer = (playerDirectionVer + playerTurnSpeed)
-				if (playerDirectionVer > 80) then
-					playerDirectionVer = 80
-				end
-			elseif (key == keys.w) then
-				dX = playerSpeed * math.cos(math.rad(playerDirectionHor))
-				dZ = playerSpeed * math.sin(math.rad(playerDirectionHor))
-			elseif (key == keys.s) then
-				dX = -playerSpeed * math.cos(math.rad(playerDirectionHor))
-				dZ = -playerSpeed * math.sin(math.rad(playerDirectionHor))
-			elseif (key == keys.a) then
-				dX = playerSpeed * math.cos(math.rad(playerDirectionHor - 90))
-				dZ = playerSpeed * math.sin(math.rad(playerDirectionHor - 90))
-			elseif (key == keys.d) then
-				dX = playerSpeed * math.cos(math.rad(playerDirectionHor + 90))
-				dZ = playerSpeed * math.sin(math.rad(playerDirectionHor + 90))
-			elseif (key == keys.space) then
-				if (shootTimer <= 0) then
-					shootTimer = 4
-				end
-			elseif (key == keys.g) then
-				loadSettings()
-
-				if (blittleOn == false) then
-					blittleOn = true
-					graphics = "Good"
-					ThreeDFrame:useBLittle(true)
-				else
-					blittleOn = false
-					graphics = "Bad"
-					ThreeDFrame:useBLittle(false)
-				end
-
-				saveSettings()
+		sleep(0.15)
+		local dX = 0
+		local dZ = 0
+		if keysDown[keys.left] then
+   			playerDirectionHor = (playerDirectionHor - playerTurnSpeed)
+    		if (playerDirectionHor <= -180) then
+				playerDirectionHor = playerDirectionHor + 360
 			end
-
-			if (free(playerX + dX, playerY, playerZ) == true) then
-				playerX = playerX + dX
+		end
+		if keysDown[keys.right] then
+			playerDirectionHor = (playerDirectionHor + playerTurnSpeed)
+			if (playerDirectionHor >= 180) then
+				playerDirectionHor = playerDirectionHor - 360
 			end
-			if (free(playerX, playerY, playerZ + dZ) == true) then
-				playerZ = playerZ + dZ
+		end
+		if keysDown[keys.down] then
+			playerDirectionVer = (playerDirectionVer - playerTurnSpeed / 2)
+			if (playerDirectionVer < -80) then
+				playerDirectionVer = -80
 			end
-
-			for _, object in pairs(objects) do
-				if (object.model == "doorx" or object.model == "doorz") then
-					local dx = object.x - playerX
-					local dz = object.z - playerZ
-					local distance = math.sqrt(dx^2 + dz^2)
-
-					if (distance < 0.5) then
-						if (endless == false) then
-							if (loadedLevel == "level1") then
-								loadedLevel = "level2"
-							elseif (loadedLevel == "level2" and object.model == "doorx") then
-								loadedLevel = "level3"
-							elseif (loadedLevel == "level3" and object.model == "doorz") then
-								loadedLevel = "level4"
-							elseif (loadedLevel == "level4" and object.model == "doorx") then
-								loadedLevel = "level5"
-							elseif (loadedLevel == "level5" and object.model == "doorz") then
-								loadedLevel = "level6"
-							elseif (loadedLevel == "level6" and object.model == "doorx") then
-								loadedLevel = "level7"
-							elseif (loadedLevel == "level7" and object.model == "doorz") then
-								loadedLevel = "level8"
-							elseif (loadedLevel == "level8" and object.model == "doorx") then
-								loadedLevel = "level9"
+		end
+		if keysDown[keys.up] then
+			playerDirectionVer = (playerDirectionVer + playerTurnSpeed / 2)
+			if (playerDirectionVer > 80) then
+				playerDirectionVer = 80
+			end
+		end
+		if keysDown[keys.w] then
+			dX = playerSpeed * math.cos(math.rad(playerDirectionHor)) + dX
+			dZ = playerSpeed * math.sin(math.rad(playerDirectionHor)) + dZ
+		end
+		if keysDown[keys.s] then
+			dX = -playerSpeed * math.cos(math.rad(playerDirectionHor)) + dX
+			dZ = -playerSpeed * math.sin(math.rad(playerDirectionHor)) + dZ
+		end
+		if keysDown[keys.a] then
+			dX = playerSpeed * math.cos(math.rad(playerDirectionHor - 90)) + dX
+			dZ = playerSpeed * math.sin(math.rad(playerDirectionHor - 90)) + dZ
+		end
+		if keysDown[keys.d] then
+			dX = playerSpeed * math.cos(math.rad(playerDirectionHor + 90)) + dX
+			dZ = playerSpeed * math.sin(math.rad(playerDirectionHor + 90)) + dZ
+		end
+		if keysDown[keys.space] then
+			if (shootTimer <= 0) then
+				shootTimer = 4
+			end
+		end
+		if (free(playerX + dX, playerY, playerZ) == true) then
+			playerX = playerX + dX
+		end
+		if (free(playerX, playerY, playerZ + dZ) == true) then
+			playerZ = playerZ + dZ
+		end
+		for _, object in pairs(objects) do
+			if (object.model == "doorx" or object.model == "doorz") then
+				local dx = object.x - playerX
+				local dz = object.z - playerZ
+				local distance = math.sqrt(dx^2 + dz^2)
+				if (distance < 0.5) then
+					if (endless == false) then
+						if (loadedLevel == "level1") then
+							loadedLevel = "level2"
+						elseif (loadedLevel == "level2" and object.model == "doorx") then
+							loadedLevel = "level3"
+						elseif (loadedLevel == "level3" and object.model == "doorz") then
+							loadedLevel = "level4"
+						elseif (loadedLevel == "level4" and object.model == "doorx") then
+							loadedLevel = "level5"
+						elseif (loadedLevel == "level5" and object.model == "doorz") then
+							loadedLevel = "level6"
+						elseif (loadedLevel == "level6" and object.model == "doorx") then
+							loadedLevel = "level7"
+						elseif (loadedLevel == "level7" and object.model == "doorz") then
+							loadedLevel = "level8"
+						elseif (loadedLevel == "level8" and object.model == "doorx") then
+							loadedLevel = "level9"
 								
-								backgroundColor1 = colors.lime
-								backgroundColor2 = colors.lightBlue
+							backgroundColor1 = colors.lime
+							backgroundColor2 = colors.lightBlue
 
-								endGame = true
-								score = score + hearts * 16 + 150 - 2*min(75, time)
-							end
+							endGame = true
+							score = score + hearts * 16 + 150 - 2*min(75, time)
+						end
 							
-							loadLevel(loadedLevel)
+						loadLevel(loadedLevel)
+					else
+						if (object.model == "doorx" and xDoor == true) then
+							xDoor = false
+							loadRandomLevel(xDoor)
+							levelCount = levelCount + 1
+						elseif (object.model == "doorz" and xDoor == false) then
+							xDoor = true
+							loadRandomLevel(xDoor)
+							levelCount = levelCount + 1
 						else
-							if (object.model == "doorx" and xDoor == true) then
-								xDoor = false
-								loadRandomLevel(xDoor)
-								levelCount = levelCount + 1
-							elseif (object.model == "doorz" and xDoor == false) then
-								xDoor = true
-								loadRandomLevel(xDoor)
-								levelCount = levelCount + 1
-							else
-								loadLevel(loadedLevel)
-							end
+							loadLevel(loadedLevel)
 						end
 					end
 				end
@@ -447,6 +436,31 @@ function gameUpdate()
 	end
 end
 
+function smoothKeyInput()
+	    keysDown = {}
+	    while true do
+		local sEvent, key = os.pullEventRaw()
+		if sEvent == "key" then
+			keysDown[key] = true
+			if (key == keys.g) then
+				loadSettings()
+				if (blittleOn == false) then
+					blittleOn = true
+					graphics = "Good"
+					ThreeDFrame:useBLittle(true)
+				else
+					blittleOn = false
+					graphics = "Bad"
+					ThreeDFrame:useBLittle(false)
+				end
+				saveSettings()
+			end
+		elseif sEvent == "key_up" then
+			keysDown[key] = nil
+		end
+	end
+end
+
 function newGameNormal()
 	score = 0
 	time = 0
@@ -462,7 +476,7 @@ function newGameNormal()
 	loadSettings()
 	ThreeDFrame:useBLittle(blittleOn)
 
-	parallel.waitForAny(inputPlayer, rendering, gameUpdate)
+	parallel.waitForAny(inputPlayer, rendering, gameUpdate, smoothKeyInput)
 
 	if (hearts > 0) then
 		term.setBackgroundColor(colors.black)
