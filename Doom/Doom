@@ -9,17 +9,17 @@ os.loadAPI(path.."/blittle")
 
 objects = {}
 
-gun = paintutils.loadImage("images/gun")
-gunf = paintutils.loadImage("images/gunf")
-bgun = paintutils.loadImage("images/bgun")
-bgunf = paintutils.loadImage("images/bgunf")
+gun = paintutils.loadImage(path.."/images/gun")
+gunf = paintutils.loadImage(path.."/images/gunf")
+bgun = paintutils.loadImage(path.."/images/bgun")
+bgunf = paintutils.loadImage(path.."/images/bgunf")
 
-heart = paintutils.loadImage("images/heart")
-bheart = paintutils.loadImage("images/bheart")
+heart = paintutils.loadImage(path.."/images/heart")
+bheart = paintutils.loadImage(path.."/images/bheart")
 hearts = 5
 
-fire = paintutils.loadImage("images/fire")
-bfire = paintutils.loadImage("images/bfire")
+fire = paintutils.loadImage(path.."/images/fire")
+bfire = paintutils.loadImage(path.."/images/bfire")
 shootTimer = 0
 
 playerX = 0
@@ -65,7 +65,7 @@ end
 
 function loadLevel(levelname)
 	objects = {}
-	local level = paintutils.loadImage("levels/"..levelname)
+	local level = paintutils.loadImage(path.."/levels/"..levelname)
 	
 	for z, row in pairs(level) do
 		for x, value in pairs(row) do
@@ -1032,7 +1032,7 @@ function mainMenu()
 				term.clear()
 				term.setCursorPos(14, 10)
 				write("Thanks for playing Doom!")
-				sleep(2)
+				sleep(1)
 				term.clear()
 				term.setCursorPos(1, 1)
 				break
