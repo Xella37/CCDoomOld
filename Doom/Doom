@@ -156,13 +156,13 @@ function inputPlayer()
 		local dX = 0
 		local dZ = 0
 		if keysDown[keys.left] then
-   			playerDirectionHor = (playerDirectionHor - playerTurnSpeed) * (keysDown[keys.leftShift] and 2 or 1)
+   			playerDirectionHor = (playerDirectionHor - playerTurnSpeed * (keysDown[keys.leftShift] and 2 or 1))
     			if (playerDirectionHor <= -180) then
 				playerDirectionHor = playerDirectionHor + 360
 			end
 		end
 		if keysDown[keys.right] then
-			playerDirectionHor = (playerDirectionHor + playerTurnSpeed) * (keysDown[keys.leftShift] and 2 or 1)
+			playerDirectionHor = (playerDirectionHor + playerTurnSpeed * (keysDown[keys.leftShift] and 2 or 1))
 			if (playerDirectionHor >= 180) then
 				playerDirectionHor = playerDirectionHor - 360
 			end
