@@ -620,6 +620,7 @@ local function newGameNormal()
 	endGame = false
 	playerDirectionHor = 0
 	playerDirectionVer = 0
+	reloadedLevel = false
 
 	loadedLevel = "level1"
 	loadLevel(loadedLevel)
@@ -677,6 +678,7 @@ local function newGameEndless()
 	endGame = false
 	playerDirectionHor = 0
 	playerDirectionVer = 0
+	reloadedLevel = false
 
 	xDoor = false
 	loadRandomLevel(xDoor)
