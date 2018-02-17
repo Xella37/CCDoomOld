@@ -635,6 +635,7 @@ local function gameUpdate()
 		end
 		if (endGame == true) then
 			finishMode = "finish"
+			sleep(3)
 			break
 		end
 	end
