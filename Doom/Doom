@@ -128,6 +128,18 @@ local function loadLevel(levelname)
 	end
 end
 
+local function loadRandomLevel(xDoor)
+	if (xDoor == false) then
+		local levels = {"level3", "level5", "level7"}
+		loadedLevel = levels[math.random(1, table.getn(levels))]
+	else
+		local levels = {"level2", "level4", "level6", "level8"}
+		loadedLevel = levels[math.random(1, table.getn(levels))]
+	end
+
+	loadLevel(loadedLevel)
+end
+
 local function free(x, y, z)
 	for objectNr, object in pairs(objects) do
 		if (object.solid == true) then
@@ -641,18 +653,6 @@ local function newGameNormal()
 			viewHighscores(false)
 		end
 	end
-end
-
-local function loadRandomLevel(xDoor)
-	if (xDoor == false) then
-		local levels = {"level3", "level5", "level7"}
-		loadedLevel = levels[math.random(1, table.getn(levels))]
-	else
-		local levels = {"level2", "level4", "level6", "level8"}
-		loadedLevel = levels[math.random(1, table.getn(levels))]
-	end
-
-	loadLevel(loadedLevel)
 end
 
 local function newGameEndless()
