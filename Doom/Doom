@@ -20,14 +20,15 @@ local hearts = 5
 
 local fire = paintutils.loadImage(path.."/images/fire")
 local bfire = paintutils.loadImage(path.."/images/bfire")
-local shootTimer = 0
+local shootCooldown = 1/20 / 16
+local lastShot = os.time() - shootCooldown
 
 local playerX = 0
 local playerY = 0
 local playerZ = -2
 
 local playerSpeed = 3
-local playerTurnSpeed = 70
+local playerTurnSpeed = 100
 local keysDown = {}
 
 local username = "Unnamed"
@@ -37,11 +38,12 @@ local score = 0
 local scoreTime = 0
 local endGame = false
 local levelCount = 0
+local reloadedLevel = false
 
 local xDoor = true
 local endless = false
 
-local enemySpeed = 1.5
+local enemySpeed = 2.5
 
 local FoV = 90
 
@@ -96,7 +98,9 @@ local function saveSettings()
 end
 
 local function loadLevel(levelname)
-	objects = {}
+	if (reloadedLevel == false) then
+		objects = {}
+	end
 	local level = paintutils.loadImage(path.."/levels/"..levelname)
 	
 	for z, row in pairs(level) do
@@ -106,22 +110,25 @@ local function loadLevel(levelname)
 					playerX = x
 					playerY = 0
 					playerZ = z
-				elseif (value == colors.orange) then
-					table.insert(objects, {model = "wallz", x = x, y = 0, z = z, rotationY = 0, solid = true})
-				elseif (value == colors.magenta) then
-					table.insert(objects, {model = "wallx", x = x, y = 0, z = z, rotationY = 0, solid = true})
-				elseif (value == colors.lightBlue) then
-					table.insert(objects, {model = "wallxz", x = x, y = 0, z = z, rotationY = 0, solid = true})
-				elseif (value == colors.red) then
-					table.insert(objects, {model = "doorz", x = x, y = 0, z = z, rotationY = 0, solid = false})
-				elseif (value == colors.green) then
-					table.insert(objects, {model = "doorx", x = x, y = 0, z = z, rotationY = 0, solid = false})
-				elseif (value == colors.yellow) then
-					table.insert(objects, {model = "enemy1", x = x, y = 0, z = z, rotationY = 0, solid = false, lastHit = os.time()})
-				elseif (value == colors.lime) then
-					table.insert(objects, {model = "enemy2", x = x, y = 0, z = z, rotationY = 0, solid = false, lastHit = os.time()})
-				elseif (value == colors.pink) then
-					table.insert(objects, {model = "emerald", x = x, y = 0, z = z, rotationY = 45, solid = true})
+				end
+				if (reloadedLevel == false) then
+					if (value == colors.orange) then
+						table.insert(objects, {model = "wallz", x = x, y = 0, z = z, rotationY = 0, solid = true})
+					elseif (value == colors.magenta) then
+						table.insert(objects, {model = "wallx", x = x, y = 0, z = z, rotationY = 0, solid = true})
+					elseif (value == colors.lightBlue) then
+						table.insert(objects, {model = "wallxz", x = x, y = 0, z = z, rotationY = 0, solid = true})
+					elseif (value == colors.red) then
+						table.insert(objects, {model = "doorz", x = x, y = 0, z = z, rotationY = 0, solid = false})
+					elseif (value == colors.green) then
+						table.insert(objects, {model = "doorx", x = x, y = 0, z = z, rotationY = 0, solid = false})
+					elseif (value == colors.yellow) then
+						table.insert(objects, {model = "enemy1", x = x, y = 0, z = z, rotationY = 0, solid = false, lastHit = os.time()})
+					elseif (value == colors.lime) then
+						table.insert(objects, {model = "enemy2", x = x, y = 0, z = z, rotationY = 0, solid = false, lastHit = os.time() - 1/20})
+					elseif (value == colors.pink) then
+						table.insert(objects, {model = "emerald", x = x, y = 0, z = z, rotationY = 45, solid = true})
+					end
 				end
 			end
 		end
@@ -163,7 +170,7 @@ local function rendering()
 		ThreeDFrame:loadSky(backgroundColor2)
 		ThreeDFrame:loadObjects(objects)
 		if (blittleOn == true) then
-			if (shootTimer > 1) then
+			if (lastShot > os.time() - shootCooldown) then
 				ThreeDFrame.buffer:loadImage(29, 8, bfire, true)
 				ThreeDFrame.buffer:loadImage(32, 10, bgunf, true)
 			else
@@ -174,7 +181,7 @@ local function rendering()
 				ThreeDFrame.buffer:loadImage(2 + (i-1) * 6, 2, bheart, true)
 			end
 		else
-			if (shootTimer > 0) then
+			if (lastShot > os.time() - shootCooldown) then
 				ThreeDFrame.buffer:loadImage(29, 8, fire, false)
 				ThreeDFrame.buffer:loadImage(32, 10, gunf, false)
 			else
@@ -189,6 +196,40 @@ local function rendering()
 
 		os.queueEvent("FakeEvent")
 		os.pullEvent("FakeEvent")
+	end
+end
+
+local function shoot()
+	local bulletDirHor = playerDirectionHor
+	local bulletX = playerX
+	local bulletZ = playerZ
+
+	local step = 0.15
+
+	local hit = false
+	for i = 1, 10 / step do
+		bulletX = bulletX + math.cos(math.rad(playerDirectionHor)) * step
+		bulletZ = bulletZ + math.sin(math.rad(playerDirectionHor)) * step
+
+		if (free(bulletX, 0, bulletZ) == false) then
+			hit = true
+			break
+		end
+
+		for objectNr, object in pairs(objects) do
+			if (object.model == "enemy1" or object.model == "enemy2") then
+				if ((math.abs(bulletX - object.x)^2 + math.abs(bulletZ - object.z))^0.5 <= 0.5) then
+					object.model = "corpse"
+					hit = true
+					score = score + 10
+					break
+				end
+			end
+		end
+
+		if (hit == true) then
+			break
+		end
 	end
 end
 
@@ -237,8 +278,9 @@ local function inputPlayer(time)
 		dZ = playerSpeed * math.sin(math.rad(playerDirectionHor + 90)) + dZ
 	end
 	if (keysDown[keys.space]) then
-		if (shootTimer <= 0) then
-			shootTimer = 4
+		if (lastShot < os.time() - shootCooldown) then
+			lastShot = os.time()
+			shoot()
 		end
 	end
 
@@ -257,25 +299,37 @@ local function inputPlayer(time)
 
 			if (distance < 0.5) then
 				if (endless == false) then
+					reloadedLevel = true
 					if (loadedLevel == "level1") then
 						loadedLevel = "level2"
+						reloadedLevel = false
 					elseif (loadedLevel == "level2" and object.model == "doorx") then
 						loadedLevel = "level3"
+						reloadedLevel = false
 					elseif (loadedLevel == "level3" and object.model == "doorz") then
 						loadedLevel = "level4"
+						reloadedLevel = false
 					elseif (loadedLevel == "level4" and object.model == "doorx") then
 						loadedLevel = "level5"
+						reloadedLevel = false
 					elseif (loadedLevel == "level5" and object.model == "doorz") then
 						loadedLevel = "level6"
+						reloadedLevel = false
 					elseif (loadedLevel == "level6" and object.model == "doorx") then
 						loadedLevel = "level7"
+						reloadedLevel = false
 					elseif (loadedLevel == "level7" and object.model == "doorz") then
 						loadedLevel = "level8"
+						reloadedLevel = false
 					elseif (loadedLevel == "level8" and object.model == "doorx") then
 						loadedLevel = "level9"
+						reloadedLevel = false
 						
 						backgroundColor1 = colors.lime
 						backgroundColor2 = colors.lightBlue
+
+						playerDirectionHor = 270
+						playerDirectionVer = 0
 
 						endGame = true
 						score = score + hearts * 16 + 400 - 8*min(50, time)
@@ -323,40 +377,6 @@ local function smoothKeyInput()
 			end
 		elseif sEvent == "key_up" then
 			keysDown[key] = nil
-		end
-	end
-end
-
-local function shoot()
-	local bulletDirHor = playerDirectionHor
-	local bulletX = playerX
-	local bulletZ = playerZ
-
-	local step = 0.15
-
-	local hit = false
-	for i = 1, 10 / step do
-		bulletX = bulletX + math.cos(math.rad(playerDirectionHor)) * step
-		bulletZ = bulletZ + math.sin(math.rad(playerDirectionHor)) * step
-
-		if (free(bulletX, 0, bulletZ) == false) then
-			hit = true
-			break
-		end
-
-		for objectNr, object in pairs(objects) do
-			if (object.model == "enemy1" or object.model == "enemy2") then
-				if ((math.abs(bulletX - object.x)^2 + math.abs(bulletZ - object.z))^0.5 <= 0.4) then
-					object.model = "corpse"
-					hit = true
-					score = score + 10
-					break
-				end
-			end
-		end
-
-		if (hit == true) then
-			break
 		end
 	end
 end
@@ -467,11 +487,6 @@ local function updateGame(time)
 				end
 			end
 		end
-	end
-
-	if (shootTimer >= 0) then
-		shoot()
-		shootTimer = shootTimer - 1
 	end
 end
 
@@ -824,17 +839,21 @@ local function drawMenu()
 	term.clear()
 	blittle.draw(blogo, 12, 3)
 
-	term.setCursorPos(21, 11)
+	term.setCursorPos(21, 10)
 	write("Start Game")
 
-	term.setCursorPos(17, 13)
+	term.setCursorPos(17, 12)
 	write("Online Highscores")
 
-	term.setCursorPos(22, 15)
+	term.setCursorPos(22, 14)
 	write("Settings")
 
-	term.setCursorPos(24, 17)
+	term.setCursorPos(24, 16)
 	write("Exit")
+
+	term.setTextColor(colors.yellow)
+	term.setCursorPos(1, 19)
+	write("Copyright (c) 2018 Xelostar")
 end
 
 local function drawSettings()
@@ -1008,25 +1027,25 @@ local function mainMenu()
 	selected = 0
 	while true do
 		term.setTextColor(colors.yellow)
-		term.setCursorPos(19, 11)
+		term.setCursorPos(19, 10)
 		if (selected == 0) then
 			write(">")
 		else
 			write(" ")
 		end
-		term.setCursorPos(15, 13)
+		term.setCursorPos(15, 12)
 		if (selected == 1) then
 			write(">")
 		else
 			write(" ")
 		end
-		term.setCursorPos(20, 15)
+		term.setCursorPos(20, 14)
 		if (selected == 2) then
 			write(">")
 		else
 			write(" ")
 		end
-		term.setCursorPos(22, 17)
+		term.setCursorPos(22, 16)
 		if (selected == 3) then
 			write(">")
 		else
