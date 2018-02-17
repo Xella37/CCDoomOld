@@ -260,6 +260,9 @@ local function inputPlayer(time)
 	if (keysDown[keys.leftShift] or keysDown[keys.rightShift]) then
 		speedMultiplier = 1.5
 		turnMultiplier = 2
+	elseif (keysDown[keys.leftAlt] or keysDown[keys.rightAlt]) then
+		speedMultiplier = 0.5
+		turnMultiplier = 0.75
 	else
 		speedMultiplier = 1
 		turnMultiplier = 1
