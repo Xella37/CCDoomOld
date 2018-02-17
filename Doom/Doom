@@ -62,7 +62,7 @@ local backgroundColor2 = colors.lightGray
 
 local finishMode
 
-function round(num, numDecimalPlaces)
+local function round(num, numDecimalPlaces)
 	local mult = 10^(numDecimalPlaces or 0)
 	return math.floor(num * mult + 0.5) / mult
 end
@@ -70,13 +70,6 @@ end
 local ThreeDFrame = ThreeD.newFrame(1, 1, screenWidth, screenHeight, FoV, playerX, playerY + 0.5, playerZ, playerDirectionVer, playerDirectionHor, colors.lime, path.."/models")
 local blittleOn = true
 ThreeDFrame:useBLittle(blittleOn)
-
-local function min(a, b)
-	if (a <= b) then
-		return a
-	end
-	return b
-end
 
 local function loadSettings()
 	if (fs.exists(path.."/settings") == false) then
@@ -374,7 +367,7 @@ local function inputPlayer(time)
 						playerDirectionVer = 0
 
 						endGame = true
-						score = score + hearts * 16 + 400 - 8*min(50, time)
+						score = score + hearts * 16 + 400 - 8*math.min(50, time)
 					end
 					
 					loadLevel(loadedLevel)
