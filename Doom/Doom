@@ -62,7 +62,7 @@ local backgroundColor2 = colors.lightGray
 
 local finishMode
 
-local function round(num, numDecimalPlaces)
+function round(num, numDecimalPlaces)
 	local mult = 10^(numDecimalPlaces or 0)
 	return math.floor(num * mult + 0.5) / mult
 end
@@ -70,6 +70,13 @@ end
 local ThreeDFrame = ThreeD.newFrame(1, 1, screenWidth, screenHeight, FoV, playerX, playerY + 0.5, playerZ, playerDirectionVer, playerDirectionHor, colors.lime, path.."/models")
 local blittleOn = true
 ThreeDFrame:useBLittle(blittleOn)
+
+local function min(a, b)
+	if (a <= b) then
+		return a
+	end
+	return b
+end
 
 local function loadSettings()
 	if (fs.exists(path.."/settings") == false) then
@@ -307,6 +314,7 @@ local function inputPlayer(time)
 	end
 	
 	if (math.abs(playerXvel) > 0.5) or (math.abs(playerZvel) > 0.5) then
+		if gunbobby == -1 then gunbobby = 1 end
 		gunbobby = (gunbobby + (math.abs(playerXvel) + math.abs(playerZvel)) / 16) % 360
 	else
 		gunbobby = -1
@@ -315,8 +323,8 @@ local function inputPlayer(time)
 		gunbobX = 0
 		gunbobY = 0
 	else
-		gunbobX = round(math.sin(gunbobby),0)
-		gunbobY = round(math.abs(math.cos(gunbobby)),0)
+		gunbobX = round(math.sin(gunbobby),1)
+		gunbobY = round(math.abs(math.cos(gunbobby)),1)
 	end
 	
 	if (free(playerX + playerXvel * time, playerY, playerZ) == true) then
@@ -367,7 +375,7 @@ local function inputPlayer(time)
 						playerDirectionVer = 0
 
 						endGame = true
-						score = score + hearts * 16 + 400 - 8*math.min(50, time)
+						score = score + hearts * 16 + 400 - 8*min(50, time)
 					end
 					
 					loadLevel(loadedLevel)
@@ -392,8 +400,8 @@ local function inputPlayer(time)
 end
 
 local function smoothKeyInput()
-  keysDown = {}
-  while true do
+	keysDown = {}
+	while true do
 		local sEvent, key = os.pullEventRaw()
 		if sEvent == "key" then
 			keysDown[key] = true
@@ -411,6 +419,7 @@ local function smoothKeyInput()
 				saveSettings()
 			elseif (key == keys.q) then
 				playerDirectionHor = playerDirectionHor + 180
+				playerDirectionVer = -playerDirectionVer
 			end
 		elseif sEvent == "key_up" then
 			keysDown[key] = nil
@@ -628,7 +637,6 @@ local function gameUpdate()
 		end
 		if (endGame == true) then
 			finishMode = "finish"
-			sleep(3)
 			break
 		end
 	end
